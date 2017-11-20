@@ -1,0 +1,218 @@
+<?xml version="1.0"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark"
+creationComplete="thisCreationComplete(event)" height="420"
+                       title="Breeze SQLite ORM - Demo "
+>
+    <fx:Script><![CDATA[
+        import breezedb.BreezeDb;
+        import breezedb.collections.Collection;
+        import breezedb.events.BreezeDatabaseEvent;
+        import db.DbORM;
+        import db.dbShema;
+        import mx.collections.ArrayCollection;
+        import mx.events.FlexEvent;
+
+        // Datagrid
+        [Bindable]public var initDG:ArrayCollection;
+
+
+        protected function thisCreationComplete(event:FlexEvent):void {
+            this.statusText.text="Using BreezeDb v" + BreezeDb.VERSION;
+
+            // DB CREATION
+            dbShema.createDB();
+            trace("DB name : "+dbShema.dbName+ " ; Table Name: "+ dbShema.tableName);
+            dbShema.customDb.addEventListener(BreezeDatabaseEvent.SETUP_SUCCESS, onDatabaseSetup);
+        }
+        protected function onDatabaseSetup(e:BreezeDatabaseEvent):void
+        {
+            dbShema.customDb.removeEventListener(BreezeDatabaseEvent.SETUP_SUCCESS, onDatabaseSetup);
+            updateDatagrid();
+        }
+        protected function save(e:Event):void
+        {
+           // DbORM.query().insert()
+            var dbOrm:DbORM=new DbORM();
+            // Expressions ternaires
+            dbOrm.String1=string1.text!=""?string1.text:dbOrm.String1;
+            dbOrm.Int1 = int1.text!="" ? int(int1.text) : dbOrm.Int1;
+
+            dbOrm.save(function(error:Error, savedDbOrm:DbORM):void
+            {
+                trace("id new created DbOrm : "+savedDbOrm.id);
+                string1.text="";
+                int1.text="";
+                updateDatagrid();
+            });
+        }
+        protected function retrieveByID(e:Event):void
+        {
+            // Retrieving Models by Primary Key
+           /*DbORM.query().find(int(idInput.text), function(error:Error, savedDbOrm:DbORM):void
+            {
+                if(savedDbOrm != null)
+                {
+                    textArea.text="ID : "+savedDbOrm.id.toString()+"\nString1 : "+savedDbOrm.String1+"\nInt1 : "+ savedDbOrm.Int1.toString();
+                }
+            });*/
+
+            // Standard Select
+
+           DbORM.query()
+                    .select("*")
+                    .where("id","=",int(idInput.text))
+                    .fetch(function(error:Error, savedDbOrms:Collection):void
+                    {
+                        if(error == null)
+                        {
+                            for each(var savedDbOrm:DbORM in savedDbOrms)
+                            {
+                                textArea.text="ID : "+savedDbOrm.id.toString()+"\nString1 : "+savedDbOrm.String1+"\nInt1 : "+ savedDbOrm.Int1.toString();
+
+                            }
+                            updateDatagrid();
+
+                        }
+                        else
+                        {
+                            textArea.text="";
+                        }
+                    })
+
+        }
+        protected function deleteModel(e:Event):void
+        {
+            DbORM.query().removeByKey(dataGrid.selectedItem.ID, function(error:Error):void
+            {
+                updateDatagrid();
+
+            });
+
+        }
+
+        protected function updateByID(e:Event):void
+        {
+            DbORM.query().find(int(idInputMAJ.text), function(error:Error, dbOrm:DbORM):void
+            {
+                if(dbOrm == null)
+                {
+                    return;
+                }
+                // Expressions ternaires
+                dbOrm.String1=string1.text!=""?string1.text:dbOrm.String1;
+                dbOrm.Int1 = int1.text!="" ? int(int1.text) : dbOrm.Int1;
+
+
+
+                dbOrm.save(function(error:Error, savedDbOrm:DbORM):void
+                {
+                    if(error == null)
+                    {
+                        trace ("updated");
+                        string1.text="";
+                        int1.text="";
+                        updateDatagrid();
+                    }
+                });
+
+
+
+            });
+
+        }
+        protected function updateDatagrid():void
+        {
+            DbORM.query()
+                    .select("*")
+                    .fetch(function(error:Error, savedDbOrms:Collection):void
+                    {
+                        if(error == null)
+                        {
+                            initDG=new ArrayCollection();
+                            for each(var savedDbOrm:DbORM in savedDbOrms)
+                            {
+                                trace("DATAGRID --> ID : "+savedDbOrm.id.toString()+" ; String1 : "+savedDbOrm.String1+" ; Int1 : "+ savedDbOrm.Int1.toString());
+                                initDG.addItem({"ID" : savedDbOrm.id,"String1":savedDbOrm.String1,"Int1":savedDbOrm.Int1});
+
+                            }
+
+
+                        }
+                        else
+                        {
+                            textArea.text="";
+                        }
+                    })
+
+        }
+        protected function onSelectionChanged(e:Event)
+        {
+            idInput.text=dataGrid.selectedItem.ID;
+            idInputMAJ.text=dataGrid.selectedItem.ID;
+        }
+        ]]></fx:Script>
+
+
+
+    <s:HGroup width="100%" height="100%">
+        <s:VGroup width="100%" horizontalAlign="center" id="column1">
+            <s:Spacer height="10"/>
+            <s:Label text="Data" textDecoration="underline" fontSize="18"/>
+            <s:Spacer height="20"/>
+            <s:HGroup width="80%" verticalAlign="middle">
+                <s:Label text="String1 : "/>
+                <s:Spacer width="100%"/>
+                <s:TextInput id="string1"/>
+            </s:HGroup>
+            <s:HGroup width="80%" verticalAlign="middle">
+                <s:Label text="Int1 : "/>
+                <s:Spacer width="100%"/>
+                <s:TextInput restrict="0-9" id="int1"/>
+            </s:HGroup>
+
+            <s:Button label="Add Entry" click="save(event)"/>
+            <s:Spacer height="5"/>
+            <s:Line width="80%">
+                <s:stroke>
+                    <s:SolidColorStroke color="#000000" weight="1"/>
+                </s:stroke>
+            </s:Line>
+            <s:Spacer height="5"/>
+            <s:TextInput text="ID" id="idInput" restrict="0-9" width="40"/>
+            <s:Button label="Display Entry" click="retrieveByID(event)"/>
+            <s:TextArea id="textArea"   height="60" editable="false"/>
+            <s:Spacer height="5"/>
+            <s:Line width="80%">
+                <s:stroke>
+                    <s:SolidColorStroke color="#000000" weight="1"/>
+                </s:stroke>
+            </s:Line>
+            <s:Spacer height="5"/>
+            <s:TextInput text="ID" id="idInputMAJ" restrict="0-9" width="40"/>
+            <s:Button label="Update ID" click="updateByID(event)"/>
+        </s:VGroup>
+
+        <s:VGroup width="100%" height="{column1.height}" horizontalAlign="center" paddingRight="10">
+            <s:Spacer height="10"/>
+            <s:Label text="Datagrid" textDecoration="underline" fontSize="18"/>
+            <s:Spacer height="20"/>
+            <s:DataGrid width="100%" height="100%" id="dataGrid" dataProvider="{initDG}" selectionChange="onSelectionChanged(event)">
+                <s:columns>
+                    <s:ArrayList>
+                        <s:GridColumn dataField="ID"/>
+                        <s:GridColumn dataField="String1"/>
+                        <s:GridColumn dataField="Int1"/>
+                    </s:ArrayList>
+                </s:columns>
+            </s:DataGrid>
+            <s:HGroup>
+                <s:Button label="Update Datagrid" click="updateDatagrid()"/>
+                <s:Button label="Delete model" click="deleteModel(event)"/>
+            </s:HGroup>
+
+        </s:VGroup>
+
+    </s:HGroup>
+
+
+</s:WindowedApplication>
