@@ -15,7 +15,6 @@ creationComplete="thisCreationComplete(event)" height="420"
         // Datagrid
         [Bindable]public var initDG:ArrayCollection;
 
-
         protected function thisCreationComplete(event:FlexEvent):void {
             this.statusText.text="Using BreezeDb v" + BreezeDb.VERSION;
 
@@ -31,9 +30,7 @@ creationComplete="thisCreationComplete(event)" height="420"
         }
         protected function save(e:Event):void
         {
-           // DbORM.query().insert()
             var dbOrm:DbORM=new DbORM();
-            // Expressions ternaires
             dbOrm.String1=string1.text!=""?string1.text:dbOrm.String1;
             dbOrm.Int1 = int1.text!="" ? int(int1.text) : dbOrm.Int1;
 
@@ -48,16 +45,6 @@ creationComplete="thisCreationComplete(event)" height="420"
         protected function retrieveByID(e:Event):void
         {
             // Retrieving Models by Primary Key
-           /*DbORM.query().find(int(idInput.text), function(error:Error, savedDbOrm:DbORM):void
-            {
-                if(savedDbOrm != null)
-                {
-                    textArea.text="ID : "+savedDbOrm.id.toString()+"\nString1 : "+savedDbOrm.String1+"\nInt1 : "+ savedDbOrm.Int1.toString();
-                }
-            });*/
-
-            // Standard Select
-
            DbORM.query()
                     .select("*")
                     .where("id","=",int(idInput.text))
@@ -87,7 +74,6 @@ creationComplete="thisCreationComplete(event)" height="420"
                 updateDatagrid();
 
             });
-
         }
 
         protected function updateByID(e:Event):void
@@ -98,12 +84,8 @@ creationComplete="thisCreationComplete(event)" height="420"
                 {
                     return;
                 }
-                // Expressions ternaires
                 dbOrm.String1=string1.text!=""?string1.text:dbOrm.String1;
                 dbOrm.Int1 = int1.text!="" ? int(int1.text) : dbOrm.Int1;
-
-
-
                 dbOrm.save(function(error:Error, savedDbOrm:DbORM):void
                 {
                     if(error == null)
@@ -114,11 +96,7 @@ creationComplete="thisCreationComplete(event)" height="420"
                         updateDatagrid();
                     }
                 });
-
-
-
             });
-
         }
         protected function updateDatagrid():void
         {
@@ -135,8 +113,6 @@ creationComplete="thisCreationComplete(event)" height="420"
                                 initDG.addItem({"ID" : savedDbOrm.id,"String1":savedDbOrm.String1,"Int1":savedDbOrm.Int1});
 
                             }
-
-
                         }
                         else
                         {
@@ -150,8 +126,8 @@ creationComplete="thisCreationComplete(event)" height="420"
             idInput.text=dataGrid.selectedItem.ID;
             idInputMAJ.text=dataGrid.selectedItem.ID;
         }
-        ]]></fx:Script>
-
+        ]]>
+    </fx:Script>
 
 
     <s:HGroup width="100%" height="100%">
